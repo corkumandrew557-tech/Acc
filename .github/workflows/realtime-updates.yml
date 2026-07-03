@@ -1,0 +1,39 @@
+name: Real-time Workflow Updates
+
+on:
+  workflow_run:
+    workflows: ['CI/CD Pipeline', 'Python CI/CD', 'Node.js CI/CD', 'Go CI/CD', 'Ruby CI/CD', 'TypeScript CI/CD']
+    types: [completed]
+
+jobs:
+  on-workflow-complete:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Capture Workflow Result
+        run: |
+          echo "📌 Workflow Completed"
+          echo "Repository: ${{ github.event.workflow_run.repository.full_name }}"
+          echo "Conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Timestamp: $(date)"
+          
+      - name: Log Update
+        run: |
+          echo "Repository: ${{ github.event.workflow_run.repository.full_name }}" >> workflow_updates.log
+          echo "Status: ${{ github.event.workflow_run.conclusion }}" >> workflow_updates.log
+          echo "Time: $(date)" >> workflow_updates.log
+          echo "---" >> workflow_updates.log
+      
+      - name: Notify on Failure
+        if: github.event.workflow_run.conclusion == 'failure'
+        run: |
+          echo "🚨 Workflow Failed!"
+          echo "Repo: ${{ github.event.workflow_run.repository.full_name }}"
+          echo "Action: https://github.com/${{ github.event.workflow_run.repository.full_name }}/actions/runs/${{ github.event.workflow_run.id }}"
+      
+      - name: Celebrate Success
+        if: github.event.workflow_run.conclusion == 'success'
+        run: |
+          echo "🎉 Workflow Successful!"
+          echo "Repo: ${{ github.event.workflow_run.repository.full_name }}"
